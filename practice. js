@@ -1,0 +1,45 @@
+const fs = require('fs');
+const csv = require('csv-parser');
+
+function readMatchesCSV(callback) {
+    const matches = [];
+    fs.createReadStream('../data/matches.csv')
+    .pipe(csv())
+    .on('data', (row)=>matches.push(row))
+    .on('end', () => callback(matches));
+}
+
+function readDeliveriesCSV(callback) {
+    const deliveries = [];
+    fs.createReadStream('../data/deliveries.csv')
+    .pipe(csv())
+    .on('data', (row)=>deliveries.push(row))
+    .on('end', () => callback(deliveries));
+}
+
+// readDeliveriesCSV(path);
+readMatchesCSV((matches) => {
+    readDeliveriesCSV((deliveries) => {
+        findMatchesPlayedPerYear(matches);
+        findMatchesWonPerTeamPerYear(matches);
+        
+    })
+});
+
+function findMatchesPlayedPerYear(matches) {
+    const matchesPerYear = {};
+
+    matches.forEach((match) => {
+        const year = match.season;
+        if (matchesPerYear[year]) {
+            matchesPerYear[year] += 1; 
+          } else {
+            matchesPerYear[year] = 1; 
+          }     
+    })
+    
+    const jsonOutput = JSON.stringify(matchesPerYear, null, 2);
+    fs.writeFileSync('matchesPerYear.json', jsonOutput);
+}
+
+
